@@ -8,7 +8,7 @@ If curious about prerendering and SEO, you can check this post: https://www.rank
 
 To recreate this setup, you will require:
 
---> A kubernetes cluster, with right access configured to the api (in this case, a LKE cluster will be used)
---> kubectl installed
---> helm installed
+--> A kubernetes cluster, with right access configured to the api (in this case, a LKE cluster will be used) 
+--> kubectl installed 
+--> helm installed 
 
