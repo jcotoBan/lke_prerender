@@ -13,5 +13,12 @@ To recreate this setup, you will require:
 --> helm installed  
 --> Certificates for the prerender endpoint. You can bring your own, or generate it with lets encrypt as will be done for this case.
 
+## Arquitecture overview
+
+
+## Steps
+
+### 1-Install NGINX ingress
+
 
 
