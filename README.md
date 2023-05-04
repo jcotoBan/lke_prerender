@@ -21,4 +21,29 @@ To recreate this setup, you will require:
 ### 1-Install NGINX ingress
 
 
+```bash
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+```
+
+```bash
+helm repo update
+```
+
+```bash
+helm install ingress-nginx ingress-nginx/ingress-nginx
+```
+
+### 2-Install cert manager (this one in case you dont bring your own script, if that is the case look at step 3)
+
+```bash
+kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.crds.yaml
+```
+
+```bash
+kubectl create namespace cert-manager
+```
+
+```bash
+helm repo add cert-manager https://charts.jetstack.io
+```
 
