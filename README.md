@@ -24,6 +24,8 @@ To recreate this setup, you will require:
 ## Arquitecture overview
 
 
+![](imgs/prerender.png)
+
 ## Kubernetes Setup
 
 ### 1-Install NGINX ingress
