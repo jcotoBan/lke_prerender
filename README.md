@@ -1,4 +1,4 @@
-# lke_prerender
+# Linode Prerender Use Case
 
 The idea of this setup is to provide a scalable and reliable way to prerender javascript content in case of bot asks for the content.
 
