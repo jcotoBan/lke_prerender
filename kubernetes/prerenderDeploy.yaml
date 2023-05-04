@@ -1,0 +1,26 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  creationTimestamp: null
+  labels:
+    app: prerender
+  name: prerender
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: prerender
+  strategy: {}
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: prerender
+    spec:
+      containers:
+      - image: koton00beng/prerender:v1.1
+        name: prerender
+        ports:
+        - containerPort: 8080
+        resources: {}
+status: {}
