@@ -47,3 +47,25 @@ kubectl create namespace cert-manager
 helm repo add cert-manager https://charts.jetstack.io
 ```
 
+Verify the pods are running:
+
+```bash
+kubectl get pods --namespace cert-manager
+```
+
+### 3-Run the clusterissuer.yaml
+
+Inside the kubernetes folder, you will find a file named clusterissuer.yaml. An Issuer or ClusterIssuer identifies which Certificate Authority cert-manager will use to issue a certificate.
+
+```bash
+cd kubernetes/
+```
+
+You can edit the name field, email and privateKeySecretRef as required.
+
+```bash
+kubectl apply -f clusterissuer.yaml
+```
+
+
+
