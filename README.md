@@ -18,10 +18,13 @@ To recreate this setup, you will require:
 
 --> A domain name you could use for the setup that can resolve. (In this case, Akamai Edge DNS will be used)
 
+--> This setup assumes you have an akamai property delivering the website you plan to prerender and is working correctly.
+
+
 ## Arquitecture overview
 
 
-## Steps
+## Kubernetes Setup
 
 ### 1-Install NGINX ingress
 
@@ -37,6 +40,8 @@ helm repo update
 ```bash
 helm install ingress-nginx ingress-nginx/ingress-nginx
 ```
+
+**This will create a loadbalancer type of service, in case of linode a node balancer.
 
 ### 2-Install cert manager (this one in case you dont bring your own script, if that is the case look at step 3)
 
@@ -76,7 +81,7 @@ kubectl apply -f clusterissuer.yaml
 
 In the same kubernetes folder a file named externaldnssetup.yaml will be found.
 
-You need to run it to be able to generate records for the prerender endpoint, But first you need to edit some fields:
+You need to run it to be able to generate records for the prerender endpoint, But first you need to edit some fields and create other resources as required:
 
 Line 56 - --provider=akamai: In this case, make sure you setup the correct dns server provider, you can check the available providers in here: https://github.com/kubernetes-sigs/external-dns
 
@@ -92,13 +97,53 @@ k create secret generic external-dns  \
 --from-literal=EXTERNAL_DNS_AKAMAI_ACCESS_TOKEN={your Akamai api client access token} --dry-run=client -o yaml > externa_dns.yaml
 ```
 
-Then, run it:
+Then, you can run the external dns deployment file::
 
 ```bash
 kubectl apply -f external_dns.yaml
 ```
 
-Check the instructions required according to your dns provider.
+Check the instructions required according to your dns provider.  
+
+
+### 5-Run the prerender components
+
+```bash
+kubectl apply -f prerenderDeploy.yaml
+```
+
+```bash
+kubectl apply -f prerenderSvc.yaml
+```
+
+### 6-Run the ingress
+
+The ingress will be the component that will route our requests to the prerender app and will create.
+
+First, edit some of the fields of ingress.yaml accordingly:
+
+Line 7 cert-manager.io/cluster-issuer: "name of cluster issuer": Make sure it matches the cluster issuer name you set on step 3.
+
+Line 8 external-dns.alpha.kubernetes.io/hostname: "www.example.com": This will add an entry of your dns domain, for example www in this case. Make sure the domain matches what you set on the external dns file on previous step.
+
+Line 14 secretName: "name of secret specified on cluster issuers": Make sure it matches the privateKeySecretRef you setup on step 3. 
+
+Line 17 - "www.example.com" (below hosts field): Make sure it matches Line 8.
+
+Finally, create the ingress:
+
+
+```bash
+kubectl apply -f ingress.yaml
+```
+
+A new record poiting to the ip of the nginx ingress load balancer should be created/propagated from your dns provider.
+
+## Akamai CDN
+
+This step is very simple. We will make our property redirect all requests that come from a bot to the prerender enpoint on kubernetes.
+
+
 
 
 
