@@ -146,6 +146,50 @@ A new record poiting to the ip of the nginx ingress load balancer should be crea
 This step is very simple. We will make our property redirect all requests that come from a bot to the prerender enpoint on kubernetes.
 
 
+### 1-Create the origin rule for the prerender origin
+
+Go and edit the property on a new version.
+
+Add a blank rule, you can name it to something meaninful like "prerender redirection"
+
+![](imgs/cd1.png)
+
+Add a Match. It will be User Agent, and it will match any bots that might send requests to your site.
+
+![](imgs/cd2.png)
+
+### 2-Add behaviors to the rule
+
+Add a new behavior of type "Origin Server"
+
+![](imgs/cd3.png)
+
+Configure this new origin as you would any other origin, using the prerender dns record we generated on the kubernetes section. Make sure the Forward Host Header and Cache Key Hostname fields are set to origin hostname.
+
+![](imgs/cd4.png)
+
+Add another behavior of type Modify Outgoing Request Path. On action select Replace the entire path, and on the Replace with, add the following:
+```
+/{{builtin.AK_SCHEME}}://{{builtin.AK_HOST}}{{builtin.AK_URL}}
+```
+This will make our prerender origin to send the request using the original origin in order to prerender all the javascript on the page.
+
+![](imgs/cd5.png)
+
+Save and activate your property.
+
+You can test your setup issuing:
+
+```bash
+curl --silent -v -k https://www.yoursite.com
+```
+
+```bash
+curl -A Google --silent -v -k https://www.yoursite.com #Set google bot as user agent
+```
+
+You will notice that the request with the bot, will render all javascript on the html response, which is the idea.
+
 
 
 
