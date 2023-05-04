@@ -152,21 +152,21 @@ Go and edit the property on a new version.
 
 Add a blank rule, you can name it to something meaninful like "prerender redirection"
 
-![](imgs/cdn1.png)
+![](imgs/cdn1.jpg)
 
 Add a Match. It will be User Agent, and it will match any bots that might send requests to your site.
 
-![](imgs/cdn2.png)
+![](imgs/cdn2.jpg)
 
 ### 2-Add behaviors to the rule
 
 Add a new behavior of type "Origin Server"
 
-![](imgs/cdn3.png)
+![](imgs/cdn3.jpg)
 
 Configure this new origin as you would any other origin, using the prerender dns record we generated on the kubernetes section. Make sure the Forward Host Header and Cache Key Hostname fields are set to origin hostname.
 
-![](imgs/cdn4.png)
+![](imgs/cdn4.jpg)
 
 Add another behavior of type Modify Outgoing Request Path. On action select Replace the entire path, and on the Replace with, add the following:
 ```
@@ -174,7 +174,7 @@ Add another behavior of type Modify Outgoing Request Path. On action select Repl
 ```
 This will make our prerender origin to send the request using the original origin in order to prerender all the javascript on the page.
 
-![](imgs/cdn5.png)
+![](imgs/cdn5.jpg)
 
 Save and activate your property.
 
