@@ -114,10 +114,6 @@ Check the instructions required according to your dns provider.
 kubectl apply -f prerenderDeploy.yaml
 ```
 
-```bash
-kubectl apply -f prerenderSvc.yaml
-```
-
 ### 6-Run the ingress
 
 The ingress will be the component that will route our requests to the prerender app and will create.
