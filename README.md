@@ -47,16 +47,22 @@ helm install ingress-nginx ingress-nginx/ingress-nginx
 
 ### 2-Install cert manager (this one in case you dont bring your own script, if that is the case look at step 3)
 
+
 ```bash
-kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.8.0/cert-manager.crds.yaml
+helm repo add jetstack https://charts.jetstack.io
 ```
 
 ```bash
-kubectl create namespace cert-manager
+helm repo update
 ```
 
 ```bash
-helm repo add cert-manager https://charts.jetstack.io
+helm install \
+  cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --version v1.11.0 \
+  --set installCRDs=true
 ```
 
 Verify the pods are running:

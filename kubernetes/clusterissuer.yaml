@@ -4,7 +4,7 @@ metadata:
   name: letsencrypt-prod-prerender
 spec:
   acme:
-    email: jcotsan@gamil.com
+    email: jcotsan@gmail.com
     server: https://acme-v02.api.letsencrypt.org/directory
     privateKeySecretRef:
       name: letsencrypt-secret-prod-prerender

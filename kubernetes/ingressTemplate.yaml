@@ -2,6 +2,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: prerenderingress
+  namespace: prerender-ns
   annotations:
     kubernetes.io/ingress.class: "nginx"
     cert-manager.io/cluster-issuer: "name of cluster issuer"
@@ -12,7 +13,7 @@ spec:
   tls:
   - hosts:
     - "www.example.com"
-    secretName: "name of secret specified on cluster issuers"
+    secretName: prerender-ns/"name of secret specified on cluster issuers"
   rules:
   - host: www.example.com
     http:
