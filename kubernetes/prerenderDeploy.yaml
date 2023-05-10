@@ -19,11 +19,24 @@ spec:
         app: prerender
     spec:
       containers:
-      - image: koton00beng/prerender:v1.1
+      - image: koton00beng/prerender:v2.0
         name: prerender
         ports:
         - containerPort: 8080
-        resources: {}
+        - containerPort: 3000
+        env:
+        - name: ADMIN_USERNAME
+          value: "admin123"
+        - name: ADMIN_PASSWORD
+          value: "jcotoadmin"
+        - name: BASIC_AUTH_USERNAME
+          value: "admin123"
+        - name: BASIC_AUTH_PASSWORD
+          value: "jcotoadmin"
+        - name: REDIS_URL
+          value: "10.128.25.125"
+        - name: JWT_TOKEN
+          value: "XnIfVmS9qUVrk@8QDXESz8GyfOdLxCR7^58EI3#Ld$DX"
 status: {}
 
 ---
@@ -41,6 +54,11 @@ spec:
   - port: 8080
     protocol: TCP
     targetPort: 8080
+    name: prerender
+  - port: 3000
+    protocol: TCP
+    targetPort: 3000
+    name: prerenderendpoints
   selector:
     app: prerender
 status:

@@ -1,1 +1,3 @@
 kubernetes/ingress.yaml
+docker-prerender/node_modules/*
+docker-prerender/package*

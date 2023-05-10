@@ -25,3 +25,10 @@ spec:
             name: prerender
             port:
               number: 8080
+      - pathType: Prefix
+        path: "/api"
+        backend:
+          service: 
+            name: prerender
+            port:
+              number: 3000
