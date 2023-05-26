@@ -1,0 +1,8 @@
+# prom-custom-values.yaml
+prometheus:
+  prometheusSpec:
+    additionalScrapeConfigs:
+      - job_name: 'tredis'
+        scrape_interval: 5s
+        static_configs:
+        - targets: ['tredis-metrics.redis.svc.cluster.local:9121']

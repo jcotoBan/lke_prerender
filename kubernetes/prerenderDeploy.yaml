@@ -34,9 +34,16 @@ spec:
         - name: BASIC_AUTH_PASSWORD
           value: "jcotoadmin"
         - name: REDIS_URL
-          value: "10.128.25.125"
+          value: "tredis-master.redis.svc.cluster.local"
         - name: JWT_TOKEN
           value: "XnIfVmS9qUVrk@8QDXESz8GyfOdLxCR7^58EI3#Ld$DX"
+        resources:
+          requests:
+            cpu: 500m
+            memory: 500Mi
+          limits:
+            cpu: 500m
+            memory: 500Mi
 status: {}
 
 ---
