@@ -1,0 +1,25 @@
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: redis-autoscaler-replicas
+  namespace: redis
+spec:
+  maxReplicas: 10
+  minReplicas: 3
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: tredis-replicas
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 80
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80

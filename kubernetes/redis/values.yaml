@@ -16,7 +16,7 @@ global:
   ##   - myRegistryKeySecretName
   ##
   imagePullSecrets: []
-  storageClass: "local-storage"
+  storageClass: "local-storage" ## JCOTO changed
   redis:
     password: ""
 

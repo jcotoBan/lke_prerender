@@ -1,0 +1,75 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: prerenderingress
+  namespace: prerender-ns
+  annotations:
+    kubernetes.io/ingress.class: "nginx"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod-prerender"
+    external-dns.alpha.kubernetes.io/hostname: "prerender.jccsutils.net"
+    external-dns.alpha.kubernetes.io/ttl: "30"
+spec:
+  tls:
+  - hosts:
+    - prerender.jccsutils.net
+    secretName: prerender-tls
+  rules:
+  - host: prerender.jccsutils.net
+    http:
+      paths:
+      - pathType: Prefix
+        path: "/"
+        backend:
+          service: 
+            name: prerender
+            port:
+              number: 8080
+      - pathType: Prefix
+        path: "/generate-jwt"
+        backend:
+          service: 
+            name: prerender
+            port:
+              number: 3000
+      - pathType: Prefix
+        path: "/clear-cache"
+        backend:
+          service: 
+            name: prerender
+            port:
+              number: 3000
+      - pathType: Prefix
+        path: "/get-keys"
+        backend:
+          service: 
+            name: prerender
+            port:
+              number: 3000
+      - pathType: Prefix
+        path: "/login"
+        backend:
+          service: 
+            name: crawler
+            port:
+              number: 5005
+      - pathType: Prefix
+        path: "/cache_warmup"
+        backend:
+          service: 
+            name: crawler
+            port:
+              number: 5005
+      - pathType: Prefix
+        path: "/cache_warmup_xml"
+        backend:
+          service: 
+            name: crawler
+            port:
+              number: 5005
+      - pathType: Prefix
+        path: "/cache_warmup_xml_parallel"
+        backend:
+          service: 
+            name: crawler
+            port:
+              number: 5005
