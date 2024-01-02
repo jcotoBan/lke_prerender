@@ -192,6 +192,7 @@ curl -A Google --silent -v -k https://www.yoursite.com #Set google bot as user a
 
 You will notice that the request with the bot, will render all javascript on the html response, which is the idea.
 
+##Testing comment
 
 
 
