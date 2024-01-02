@@ -7,7 +7,7 @@ on:
     - 'v*'
 
 jobs:
-  push_to_registry:
+  push_to_registry_and_scan:
     name: Push Docker image to Docker Hub
     runs-on: ubuntu-latest
     steps:
@@ -39,3 +39,9 @@ jobs:
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
+          
+      - name: Sysdig CLI scanner
+        run: ./scripts/deploy_scan.sh
+        env:
+          sysdig_api: ${{ secrets.SYSDIG_API }}
+    
