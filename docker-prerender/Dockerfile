@@ -14,7 +14,7 @@ RUN npm i express
 
 
 # Copy server.js to container
-COPY server.js /app/server.js
+COPY docker-prerender/server.js /app/server.js
 
 RUN sed -i "s/process\.env\.REDIS_URL/\"redis:\/\/\" \+ process.env.REDIS_URL \+ \":6379\"/" ./node_modules/prerender-redis-cache/lib/prerenderRedisCache.js
 
