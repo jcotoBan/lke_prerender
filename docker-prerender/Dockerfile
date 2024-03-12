@@ -2,6 +2,10 @@ FROM alpine:3.14
 
 WORKDIR /app
 
+ENV SECRET_KEY "mysecretkey"
+ENV DATABASE_PASSWORD "password123"
+LABEL AWS_TOKEN="thisisanawstoken"
+
 # Install chromium and node/npm
 RUN apk add --no-cache chromium
 RUN apk add --update nodejs npm
@@ -12,6 +16,9 @@ RUN npm i express-jwt
 RUN npm i basic-auth
 RUN npm i express
 
+#Trigger rules for sysdig agent scan
+ADD https://archive.apache.org/dist/logging/log4j/2.14.1/apache-log4j-2.14.1-bin.tar.gz /root
+RUN tar xzvf /root/apache-log4j-2.14.1-bin.tar.gz
 
 # Copy server.js to container
 COPY docker-prerender/server.js /app/server.js
