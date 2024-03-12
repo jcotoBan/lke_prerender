@@ -30,6 +30,14 @@ jobs:
             type=ref,event=pr
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
+
+      - name: Sysdig CLI scanner
+        run: |
+          chmod +x ./scripts/deploy_scan.sh
+          ./scripts/deploy_scan.sh
+        env:
+          sysdig_api: ${{ secrets.SYSDIG_API }}
+          sysdig_api_url: ${{ env.SYSDIG_API_URL }}
       
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
@@ -40,10 +48,5 @@ jobs:
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           
-      - name: Sysdig CLI scanner
-        run: |
-          chmod +x ./scripts/deploy_scan.sh
-          ./scripts/deploy_scan.sh
-        env:
-          sysdig_api: ${{ secrets.SYSDIG_API }}
+
     
