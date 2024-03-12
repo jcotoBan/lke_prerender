@@ -37,7 +37,7 @@ jobs:
           ./scripts/deploy_scan.sh
         env:
           sysdig_api: ${{ secrets.SYSDIG_API }}
-          sysdig_api_url: ${{ env.SYSDIG_API_URL }}
+          sysdig_api_url: ${{ vars.SYSDIG_API_URL }}
       
       - name: Build and push Docker image
         uses: docker/build-push-action@v5
