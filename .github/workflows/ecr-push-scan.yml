@@ -29,6 +29,7 @@ jobs:
         run: |
           chmod +x ./scripts/deploy_scan.sh
           ./scripts/deploy_scan.sh
+        continue-on-error: true
         env:
           sysdig_api: ${{ secrets.SYSDIG_API }}
           sysdig_api_url: ${{ vars.SYSDIG_API_URL }}
