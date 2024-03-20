@@ -1,4 +1,4 @@
-name: ECR_scan_push
+name: ECR sysdig scan and push
 
 on:
   push:
