@@ -44,7 +44,7 @@ jobs:
           sysdig_api_url: ${{ vars.SYSDIG_API_URL }}
       
       - name: Push image to Amazon ECR
-        id: build-image
+        id: push-image
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           IMAGE_TAG: main
