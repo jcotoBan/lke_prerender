@@ -17,8 +17,8 @@ RUN npm i basic-auth
 RUN npm i express
 
 #Trigger rules for sysdig agent scan
-#ADD https://archive.apache.org/dist/logging/log4j/2.14.1/apache-log4j-2.14.1-bin.tar.gz /root
-#RUN tar xzvf /root/apache-log4j-2.14.1-bin.tar.gz
+ADD https://archive.apache.org/dist/logging/log4j/2.14.1/apache-log4j-2.14.1-bin.tar.gz /root
+RUN tar xzvf /root/apache-log4j-2.14.1-bin.tar.gz
 
 # Copy server.js to container
 COPY docker-prerender/server.js /app/server.js
