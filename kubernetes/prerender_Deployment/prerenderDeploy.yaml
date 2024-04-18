@@ -19,7 +19,7 @@ spec:
         app: prerender
     spec:
       containers:
-      - image: koton00beng/prerender:v2.0
+      - image: 992382711296.dkr.ecr.us-east-1.amazonaws.com/prerender:main
         name: prerender
         ports:
         - containerPort: 8080
