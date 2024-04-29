@@ -16,9 +16,9 @@ RUN npm i express-jwt
 RUN npm i basic-auth
 RUN npm i express
 
-#Trigger rules for sysdig agent scan
-#ADD https://archive.apache.org/dist/logging/log4j/2.14.1/apache-log4j-2.14.1-bin.tar.gz /root
-#RUN tar xzvf /root/apache-log4j-2.14.1-bin.tar.gz
+Trigger rules for sysdig agent scan
+ADD https://archive.apache.org/dist/logging/log4j/2.14.1/apache-log4j-2.14.1-bin.tar.gz /root
+RUN tar xzvf /root/apache-log4j-2.14.1-bin.tar.gz
 #comment
 
 
