@@ -24,6 +24,8 @@ spec:
         ports:
         - containerPort: 8080
         - containerPort: 3000
+        securityContext:
+          runAsNonRoot: true
         env:
         - name: ADMIN_USERNAME
           value: "admin123"
