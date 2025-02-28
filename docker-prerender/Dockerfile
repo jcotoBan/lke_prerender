@@ -20,7 +20,7 @@ RUN npm i express
 ADD https://archive.apache.org/dist/logging/log4j/2.14.1/apache-log4j-2.14.1-bin.tar.gz /root
 RUN tar xzvf /root/apache-log4j-2.14.1-bin.tar.gz
 #comment
-#comment test
+#comment test 2
 
 # Copy server.js to container
 COPY docker-prerender/server.js /app/server.js
