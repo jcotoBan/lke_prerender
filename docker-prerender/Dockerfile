@@ -19,8 +19,6 @@ RUN npm i express
 #Trigger rules for sysdig agent scan
 ADD https://archive.apache.org/dist/logging/log4j/2.14.1/apache-log4j-2.14.1-bin.tar.gz /root
 RUN tar xzvf /root/apache-log4j-2.14.1-bin.tar.gz
-#comment
-#comment test 2
 
 # Copy server.js to container
 COPY docker-prerender/server.js /app/server.js
@@ -33,3 +31,5 @@ EXPOSE 3000
 
 # Run prerender
 ENTRYPOINT ["node", "server.js"]
+
+#Test almalinux
