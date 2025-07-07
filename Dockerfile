@@ -21,7 +21,7 @@ ADD https://archive.apache.org/dist/logging/log4j/2.14.1/apache-log4j-2.14.1-bin
 RUN tar xzvf /root/apache-log4j-2.14.1-bin.tar.gz
 
 # Copy server.js to container
-COPY docker-prerender/server.js /app/server.js
+COPY ./docker-prerender/server.js /app/server.js
 
 RUN sed -i "s/process\.env\.REDIS_URL/\"redis:\/\/\" \+ process.env.REDIS_URL \+ \":6379\"/" ./node_modules/prerender-redis-cache/lib/prerenderRedisCache.js
 
@@ -32,4 +32,4 @@ EXPOSE 3000
 # Run prerender
 ENTRYPOINT ["node", "server.js"]
 
-#Test Alma again
+#Test # 11
