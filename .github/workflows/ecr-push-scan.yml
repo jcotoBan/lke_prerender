@@ -31,7 +31,8 @@ jobs:
           IMAGE_TAG: main
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
         run: |
-          # Build a docker container 
+          # Build a docker container
+          ls 
           docker build -f docker-prerender/Dockerfile -t $ECR_REGISTRY/${{ vars.ECR_REPOSITORY }}:$IMAGE_TAG .
 
       - name: Sysdig CLI scanner
