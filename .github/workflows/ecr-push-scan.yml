@@ -33,7 +33,7 @@ jobs:
         run: |
           # Build a docker container
           ls 
-          docker build -f docker-prerender/Dockerfile -t $ECR_REGISTRY/${{ vars.ECR_REPOSITORY }}:$IMAGE_TAG .
+          docker build -f Dockerfile -t $ECR_REGISTRY/${{ vars.ECR_REPOSITORY }}:$IMAGE_TAG .
 
       - name: Sysdig CLI scanner
         run: |
