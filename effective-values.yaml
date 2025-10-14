@@ -1,0 +1,348 @@
+affinity: {}
+cluster:
+  additional_settings:
+    log_level: info
+    monitoring_port: 8080
+  affinity: {}
+  dns_policy: null
+  enable_prometheus_scraping: true
+  env: []
+  host_network: false
+  image:
+    pull_policy: IfNotPresent
+    pull_secrets: []
+    registry: quay.io
+    repository: sysdig/cluster-shield
+    tag: 1.13.0
+  node_selector: {}
+  pod_annotations: {}
+  pod_disruption_budget:
+    create: true
+    min_available: 1
+  pod_labels: {}
+  priority_class:
+    annotations: {}
+    create: false
+    labels: {}
+    name: null
+    value: 10
+  probes:
+    liveness:
+      failureThreshold: 9
+      initialDelaySeconds: 5
+      periodSeconds: 5
+    readiness:
+      failureThreshold: 9
+      initialDelaySeconds: 10
+      periodSeconds: 5
+  rbac:
+    annotations: {}
+    create: true
+    labels: {}
+    service_account_name: null
+  replica_count: 2
+  resources:
+    limits:
+      cpu: 1500m
+      memory: 1536Mi
+    requests:
+      cpu: 500m
+      memory: 512Mi
+  run_mode: multi-process
+  security_context: {}
+  service:
+    annotations: {}
+    labels: {}
+    type: ClusterIP
+  tls_certificates:
+    create: true
+    secret_name: null
+  tolerations: []
+  update_strategy:
+    rollingUpdate: {}
+    type: RollingUpdate
+  validatingwebhookconfiguration:
+    create: true
+  volume_mounts: []
+  volumes: []
+  workload_annotations: {}
+  workload_labels: {}
+cluster_config:
+  cluster_domain: cluster.local
+  cluster_type: generic
+  name: sysdigdemo
+  root_namespace: kube-system
+  tags: {}
+env: []
+extra_capabilities_api_versions: []
+features:
+  admission_control:
+    container_vulnerability_management:
+      enabled: true
+    dry_run: false
+    enabled: false
+    excluded_namespaces: []
+    failure_policy: Fail
+    http_port: 8443
+    posture:
+      enabled: true
+    timeout: 10
+  detections:
+    drift_control:
+      enabled: true
+    kubernetes_audit:
+      enabled: true
+      excluded_namespaces: []
+      http_port: 6443
+      timeout: 10
+      webhook_rules:
+      - apiGroups:
+        - ""
+        - apps
+        - autoscaling
+        - batch
+        - networking.k8s.io
+        - rbac.authorization.k8s.io
+        - extensions
+        apiVersions:
+        - '*'
+        operations:
+        - '*'
+        resources:
+        - '*/*'
+        scope: '*'
+    malware_control:
+      enabled: true
+    ml_policies:
+      enabled: true
+  investigations:
+    activity_audit:
+      enabled: true
+    audit_tap:
+      enabled: false
+    captures:
+      enabled: true
+    event_forwarder:
+      enabled: false
+      integrations: []
+      transmit_message_types: []
+    live_logs:
+      enabled: true
+    network_security:
+      enabled: false
+  kubernetes_metadata:
+    enabled: true
+  monitor:
+    app_checks:
+      enabled: false
+    java_management_extensions:
+      enabled: false
+    kube_state_metrics:
+      enabled: false
+    kubernetes_events:
+      enabled: false
+    prometheus:
+      enabled: false
+      prometheus_yaml: {}
+    statsd:
+      enabled: false
+  posture:
+    cluster_posture:
+      enabled: true
+    host_posture:
+      enabled: true
+  respond:
+    rapid_response:
+      enabled: false
+      password: null
+    response_actions:
+      enabled: false
+  vulnerability_management:
+    container_vulnerability_management:
+      enabled: true
+      local_cluster:
+        registry_secrets: []
+      platform_services_enabled: true
+      registry_ssl:
+        verify: true
+    host_vulnerability_management:
+      enabled: true
+    in_use:
+      enabled: true
+      integration_enabled: false
+fullname_override: null
+host:
+  additional_settings: {}
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/arch
+            operator: In
+            values:
+            - amd64
+            - arm64
+            - ppc64le
+            - s390x
+          - key: kubernetes.io/os
+            operator: In
+            values:
+            - linux
+  dns_policy: null
+  driver: universal_ebpf
+  env: []
+  image:
+    kmodule_name: agent-kmodule
+    pull_policy: IfNotPresent
+    pull_secrets: []
+    registry: quay.io
+    repository: sysdig
+    shield_name: agent-slim
+    tag: 14.1.0
+  node_selector: {}
+  pod_annotations: {}
+  pod_labels: {}
+  priority_class:
+    annotations: {}
+    create: false
+    labels: {}
+    name: null
+    value: 10
+  privileged: true
+  probes:
+    liveness:
+      failureThreshold: 9
+      initialDelaySeconds: 90
+      periodSeconds: 10
+    readiness:
+      failureThreshold: 9
+      initialDelaySeconds: 90
+      periodSeconds: 10
+  rbac:
+    annotations: {}
+    create: true
+    labels: {}
+    service_account_name: null
+  resources:
+    kmodule:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 384Mi
+    shield:
+      limits:
+        cpu: 1000m
+        memory: 1Gi
+      requests:
+        cpu: 250m
+        memory: 384Mi
+  security_context: {}
+  tolerations:
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/master
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/control-plane
+  - effect: NoSchedule
+    key: node-role.kubernetes.io/controlplane
+    operator: Equal
+    value: "true"
+  - effect: NoExecute
+    key: node-role.kubernetes.io/etcd
+    operator: Equal
+    value: "true"
+  - effect: NoExecute
+    key: CriticalAddonsOnly
+    operator: Equal
+    value: "true"
+  update_strategy:
+    rollingUpdate: {}
+    type: RollingUpdate
+  volume_mounts: []
+  volumes: []
+  workload_annotations: {}
+  workload_labels: {}
+host_windows:
+  additional_settings:
+    monitoring_port: 8081
+  affinity:
+    nodeAffinity:
+      requiredDuringSchedulingIgnoredDuringExecution:
+        nodeSelectorTerms:
+        - matchExpressions:
+          - key: kubernetes.io/arch
+            operator: In
+            values:
+            - amd64
+          - key: kubernetes.io/os
+            operator: In
+            values:
+            - windows
+  agent_runtime_additional_settings: {}
+  enabled: false
+  env: []
+  image:
+    name: host-shield
+    pull_policy: IfNotPresent
+    pull_secrets: []
+    registry: quay.io
+    repository: sysdig
+    tag: 0.9.0
+  node_selector:
+    kubernetes.io/os: windows
+  pod_annotations: {}
+  pod_labels: {}
+  resources:
+    limits:
+      cpu: 1000m
+      memory: 1Gi
+    requests:
+      cpu: 250m
+      memory: 384Mi
+  tolerations:
+  - effect: NoSchedule
+    key: os
+    value: Windows
+  update_strategy:
+    rollingUpdate: {}
+    type: RollingUpdate
+  volume_mounts: []
+  volumes: []
+  workload_annotations: {}
+  workload_labels: {}
+name_override: null
+node_selector: {}
+on_prem_version: null
+pod_annotations: {}
+pod_labels: {}
+proxy:
+  http_proxy: null
+  http_proxy_existing_secret: null
+  https_proxy: null
+  https_proxy_existing_secret: null
+  no_proxy: null
+  no_proxy_existing_secret: null
+ssl:
+  ca:
+    certs: []
+    existing_ca_secret: null
+    existing_ca_secret_key_name: null
+    key_name: null
+  verify: true
+sysdig_endpoint:
+  access_key: 033deaf4-4189-4e6b-b793-9e0e42741fad
+  access_key_existing_secret: null
+  api_url: null
+  collector:
+    host: null
+    port: null
+  region: us4
+  secure_api_token: null
+  secure_api_token_existing_secret: null
+tolerations: []
+volume_mounts: []
+volumes: []
+workload_annotations: {}
+workload_labels: {}
