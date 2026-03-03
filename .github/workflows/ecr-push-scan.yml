@@ -74,17 +74,17 @@ jobs:
           # e.g. ./scripts/deploy_scan.sh "$SCAN_IMAGE"
           ./scripts/deploy_scan.sh 2>&1 | tee sysdig-app-scan.log || true
 
-          # Extract Sysdig assetId (default: first sha256:<64>)
-          ASSET_ID="$(grep -Eo 'sha256:[0-9a-f]{64}' sysdig-app-scan.log | head -n1 || true)"
+          # Extract Sysdig sbomId (default: first sha256:<64>)
+          SBOM_ID="$(grep -Eo 'sbomId":"[^"]+"' sysdig-app-scan.log | head -n1 | cut -d'"' -f3 || true)"
 
-          if [[ -z "${ASSET_ID}" ]]; then
-            echo "ERROR: Failed to extract assetId for app image from Sysdig output."
+          if [[ -z "${SBOM_ID}" ]]; then
+            echo "ERROR: Failed to extract sbomId for app image from Sysdig output."
             tail -n 200 sysdig-app-scan.log
             exit 1
           fi
 
-          echo "asset_id=${ASSET_ID}" >> "$GITHUB_OUTPUT"
-          echo "App assetId: ${ASSET_ID}"
+          echo "sbom_id=${SBOM_ID}" >> "$GITHUB_OUTPUT"
+          echo "App sbom_id: ${SBOM_ID}"
 
       - name: Push app image to ECR (capture digest ref)
         id: push-app
@@ -139,18 +139,18 @@ jobs:
           chmod +x ./scripts/deploy_scan_ubuntu.sh
 
           # Your script should scan whatever is in SCAN_IMAGE
-          ./scripts/deploy_scan.sh 2>&1 | tee sysdig-ubuntu-scan.log || true
+          ./scripts/deploy_scan_ubuntu.sh 2>&1 | tee sysdig-ubuntu-scan.log || true
 
-          ASSET_ID="$(grep -Eo 'sha256:[0-9a-f]{64}' sysdig-ubuntu-scan.log | head -n1 || true)"
+          SBOM_ID="$(grep -Eo 'sbomId":"[^"]+"' sysdig-app-scan.log | head -n1 | cut -d'"' -f3 || true)"
 
-          if [[ -z "${ASSET_ID}" ]]; then
-            echo "ERROR: Failed to extract assetId for ubuntu image from Sysdig output."
+          if [[ -z "${SBOM_ID}" ]]; then
+            echo "ERROR: Failed to extract sbomId for ubuntu image from Sysdig output."
             tail -n 200 sysdig-ubuntu-scan.log
             exit 1
           fi
 
-          echo "asset_id=${ASSET_ID}" >> "$GITHUB_OUTPUT"
-          echo "Ubuntu assetId: ${ASSET_ID}"
+          echo "sbom_id=${SBOM_ID}" >> "$GITHUB_OUTPUT"
+          echo "Ubuntu sbom_id: ${SBOM_ID}"
 
       - name: Push ubuntu image to ECR (capture digest ref)
         id: push-ubuntu
@@ -198,7 +198,7 @@ jobs:
         id: sbom-app
         env:
           SYSDIG_API_TOKEN: ${{ secrets.SYSDIG_API }}
-          ASSET_ID: ${{ steps.scan-app.outputs.asset_id }}
+          SBOM_ID: ${{ steps.scan-app.outputs.sbom_id }}
         shell: bash
         run: |
           set -euo pipefail
@@ -207,7 +207,7 @@ jobs:
 
           curl -fsSL \
             -H "Authorization: Bearer ${SYSDIG_API_TOKEN}" \
-            "${API}?assetId=${ASSET_ID}&assetType=container-image" \
+            "${API}?bomIdentifier=${SBOM_ID} \
             -o "${OUT}"
 
           head -c 1 "${OUT}" | grep -q '{'
@@ -218,7 +218,7 @@ jobs:
         id: sbom-ubuntu
         env:
           SYSDIG_API_TOKEN: ${{ secrets.SYSDIG_API }}
-          ASSET_ID: ${{ steps.scan-ubuntu.outputs.asset_id }}
+          SBOM_ID: ${{ steps.scan-ubuntu.outputs.sbom_id }}
         shell: bash
         run: |
           set -euo pipefail
@@ -227,7 +227,7 @@ jobs:
 
           curl -fsSL \
             -H "Authorization: Bearer ${SYSDIG_API_TOKEN}" \
-            "${API}?assetId=${ASSET_ID}&assetType=container-image" \
+            "${API}?bomIdentifier=${SBOM_ID} \
             -o "${OUT}"
 
           head -c 1 "${OUT}" | grep -q '{'
