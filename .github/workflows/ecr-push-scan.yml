@@ -114,13 +114,14 @@ jobs:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           TAG: ${{ steps.meta.outputs.tag }}
           UBUNTU_BASE: "ubuntu:22.04"
+          UBUNTU_TAG: "22.04"
         shell: bash
         run: |
           set -euo pipefail
 
           docker pull "${UBUNTU_BASE}"
 
-          UBUNTU_IMAGE="${ECR_REGISTRY}/${{ vars.ECR_UBUNTU_REPOSITORY }}:${TAG}"
+          UBUNTU_IMAGE="${ECR_REGISTRY}/${{ vars.ECR_UBUNTU_REPOSITORY }}:${UBUNTU_TAG}"
           docker tag "${UBUNTU_BASE}" "${UBUNTU_IMAGE}"
 
           echo "ubuntu_image=${UBUNTU_IMAGE}" >> "$GITHUB_OUTPUT"
