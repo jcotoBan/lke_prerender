@@ -164,7 +164,7 @@ jobs:
 
           if [[ -z "${SBOM_ID}" ]]; then
             echo "ERROR: Failed to extract sbomId for ubuntu image from Sysdig output."
-            tail -n 200 sysdig-ubuntu-scan.log
+            tail -n 200 sysdig-app-scan.log
             exit 1
           fi
 
