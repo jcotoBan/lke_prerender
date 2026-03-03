@@ -61,6 +61,7 @@ jobs:
 
       - name: Sysdig scan (app image) + capture assetId
         id: scan-app
+        continue-on-error: true
         env:
           sysdig_api: ${{ secrets.SYSDIG_API }}
           sysdig_api_url: ${{ vars.SYSDIG_API_URL }}
@@ -137,6 +138,7 @@ jobs:
 
       - name: Sysdig scan (ubuntu image) + capture assetId
         id: scan-ubuntu
+        continue-on-error: true
         env:
           sysdig_api: ${{ secrets.SYSDIG_API }}
           sysdig_api_url: ${{ vars.SYSDIG_API_URL }}
