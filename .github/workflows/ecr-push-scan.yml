@@ -1,19 +1,23 @@
-name: ECR sysdig scan and push
+name: ECR sysdig scan push sign and sbom attest (2 images)
 
 on:
   push:
-    branches: [ "main" ]
+    branches: [ "image-signing-demo" ]
     tags:
-    - 'v*'
+      - "v*"
+
+permissions:
+  contents: read
+  id-token: write
 
 jobs:
-  push_to_registry_and_scan:
-    name: Pushing image to ECR
+  supply_chain_demo:
+    name: Build/Pull -> Scan -> Push -> Sign -> SBOM Attest (App + Ubuntu)
     runs-on: ubuntu-latest
+
     steps:
       - name: Check out the repo
         uses: actions/checkout@v4
-
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@0e613a0980cbf65ed5b322eb7a1e075d28913a83
         with:
@@ -25,31 +29,253 @@ jobs:
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@62f4f872db3836360b72999f4b87f1ff13310f3a
 
-      - name: Build and tag image
-        id: build-image
-        env:
-          IMAGE_TAG: main
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+      - name: Compute tag (branch vs release tag)
+        id: meta
+        shell: bash
         run: |
-          # Build a docker container
-          ls 
-          docker build -f Dockerfile -t $ECR_REGISTRY/${{ vars.ECR_REPOSITORY }}:$IMAGE_TAG .
+          set -euo pipefail
+          if [[ "${GITHUB_REF_TYPE}" == "tag" ]]; then
+            TAG="${GITHUB_REF_NAME}"          # e.g. v1.2.3
+          else
+            TAG="main"                        # keep your original "main" behavior
+          fi
+          echo "tag=${TAG}" >> "$GITHUB_OUTPUT"
+          echo "Using tag: ${TAG}"
 
-      - name: Sysdig CLI scanner
+      ###########################################
+      # Image A: App (local build)
+      ###########################################
+
+      - name: Build app image
+        id: build-app
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          TAG: ${{ steps.meta.outputs.tag }}
+        shell: bash
         run: |
-          chmod +x ./scripts/deploy_scan.sh
-          ./scripts/deploy_scan.sh
-        continue-on-error: false
+          set -euo pipefail
+          APP_IMAGE="${ECR_REGISTRY}/${{ vars.ECR_REPOSITORY }}:${TAG}"
+          docker build -f Dockerfile -t "${APP_IMAGE}" .
+          echo "app_image=${APP_IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "Built app image: ${APP_IMAGE}"
+
+      - name: Sysdig scan (app image) + capture assetId
+        id: scan-app
         env:
           sysdig_api: ${{ secrets.SYSDIG_API }}
           sysdig_api_url: ${{ vars.SYSDIG_API_URL }}
-      
-      - name: Push image to Amazon ECR
-        id: push-image
+          SCAN_IMAGE: ${{ steps.build-app.outputs.app_image }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./scripts/deploy_scan.sh
+
+          # Your script should scan whatever is in SCAN_IMAGE
+          # e.g. ./scripts/deploy_scan.sh "$SCAN_IMAGE"
+          ./scripts/deploy_scan.sh 2>&1 | tee sysdig-app-scan.log
+
+          # Extract Sysdig assetId (default: first sha256:<64>)
+          ASSET_ID="$(grep -Eo 'sha256:[0-9a-f]{64}' sysdig-app-scan.log | head -n1 || true)"
+
+          if [[ -z "${ASSET_ID}" ]]; then
+            echo "ERROR: Failed to extract assetId for app image from Sysdig output."
+            tail -n 200 sysdig-app-scan.log
+            exit 1
+          fi
+
+          echo "asset_id=${ASSET_ID}" >> "$GITHUB_OUTPUT"
+          echo "App assetId: ${ASSET_ID}"
+
+      - name: Push app image to ECR (capture digest ref)
+        id: push-app
+        env:
+          APP_IMAGE: ${{ steps.build-app.outputs.app_image }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker push "${APP_IMAGE}"
+
+          DIGEST_REF="$(docker inspect --format='{{index .RepoDigests 0}}' "${APP_IMAGE}")"
+          if [[ -z "${DIGEST_REF}" ]]; then
+            echo "ERROR: Could not determine digest ref for app image."
+            exit 1
+          fi
+
+          echo "digest_ref=${DIGEST_REF}" >> "$GITHUB_OUTPUT"
+          echo "App digest ref: ${DIGEST_REF}"
+
+      ###########################################
+      # Image B: Ubuntu (third-party, as-is)
+      ###########################################
+
+      - name: Pull + tag ubuntu image into ECR repo
+        id: prep-ubuntu
         env:
           ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: main
+          TAG: ${{ steps.meta.outputs.tag }}
+          UBUNTU_BASE: "ubuntu:22.04"
+        shell: bash
         run: |
-          # push it to ECR
-          docker push $ECR_REGISTRY/${{ vars.ECR_REPOSITORY }}:$IMAGE_TAG
-          echo "image=$ECR_REGISTRY/${{ vars.ECR_REPOSITORY }}:$IMAGE_TAG" >> $GITHUB_OUTPUT
+          set -euo pipefail
+
+          docker pull "${UBUNTU_BASE}"
+
+          UBUNTU_IMAGE="${ECR_REGISTRY}/${{ vars.ECR_UBUNTU_REPOSITORY }}:${TAG}"
+          docker tag "${UBUNTU_BASE}" "${UBUNTU_IMAGE}"
+
+          echo "ubuntu_image=${UBUNTU_IMAGE}" >> "$GITHUB_OUTPUT"
+          echo "Prepared ubuntu image: ${UBUNTU_IMAGE}"
+
+      - name: Sysdig scan (ubuntu image) + capture assetId
+        id: scan-ubuntu
+        env:
+          sysdig_api: ${{ secrets.SYSDIG_API }}
+          sysdig_api_url: ${{ vars.SYSDIG_API_URL }}
+          SCAN_IMAGE: ${{ steps.prep-ubuntu.outputs.ubuntu_image }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          chmod +x ./scripts/deploy_scan_ubuntu.sh
+
+          # Your script should scan whatever is in SCAN_IMAGE
+          ./scripts/deploy_scan.sh 2>&1 | tee sysdig-ubuntu-scan.log
+
+          ASSET_ID="$(grep -Eo 'sha256:[0-9a-f]{64}' sysdig-ubuntu-scan.log | head -n1 || true)"
+
+          if [[ -z "${ASSET_ID}" ]]; then
+            echo "ERROR: Failed to extract assetId for ubuntu image from Sysdig output."
+            tail -n 200 sysdig-ubuntu-scan.log
+            exit 1
+          fi
+
+          echo "asset_id=${ASSET_ID}" >> "$GITHUB_OUTPUT"
+          echo "Ubuntu assetId: ${ASSET_ID}"
+
+      - name: Push ubuntu image to ECR (capture digest ref)
+        id: push-ubuntu
+        env:
+          UBUNTU_IMAGE: ${{ steps.prep-ubuntu.outputs.ubuntu_image }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker push "${UBUNTU_IMAGE}"
+
+          DIGEST_REF="$(docker inspect --format='{{index .RepoDigests 0}}' "${UBUNTU_IMAGE}")"
+          if [[ -z "${DIGEST_REF}" ]]; then
+            echo "ERROR: Could not determine digest ref for ubuntu image."
+            exit 1
+          fi
+
+          echo "digest_ref=${DIGEST_REF}" >> "$GITHUB_OUTPUT"
+          echo "Ubuntu digest ref: ${DIGEST_REF}"
+
+      ###########################################
+      # Cosign: install, sign both images
+      ###########################################
+
+      - name: Install cosign
+        uses: sigstore/cosign-installer@v3
+        with:
+          cosign-release: "v2.2.4"
+
+      - name: Cosign sign both images (keyless, by digest)
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+          APP_DIGEST_REF: ${{ steps.push-app.outputs.digest_ref }}
+          UBUNTU_DIGEST_REF: ${{ steps.push-ubuntu.outputs.digest_ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          cosign sign --yes "${APP_DIGEST_REF}"
+          cosign sign --yes "${UBUNTU_DIGEST_REF}"
+
+      ###########################################
+      # SBOM: fetch from Sysdig + attest to each digest
+      ###########################################
+
+      - name: Download SBOM from Sysdig (app)
+        id: sbom-app
+        env:
+          SYSDIG_API_TOKEN: ${{ secrets.SYSDIG_API }}
+          ASSET_ID: ${{ steps.scan-app.outputs.asset_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          API="https://api.us4.sysdig.com/secure/vulnerability/v1beta1/sboms"
+          OUT="sbom-app.cdx.json"
+
+          curl -fsSL \
+            -H "Authorization: Bearer ${SYSDIG_API_TOKEN}" \
+            "${API}?assetId=${ASSET_ID}&assetType=container-image" \
+            -o "${OUT}"
+
+          head -c 1 "${OUT}" | grep -q '{'
+          echo "sbom_file=${OUT}" >> "$GITHUB_OUTPUT"
+          echo "Downloaded app SBOM: ${OUT}"
+
+      - name: Download SBOM from Sysdig (ubuntu)
+        id: sbom-ubuntu
+        env:
+          SYSDIG_API_TOKEN: ${{ secrets.SYSDIG_API }}
+          ASSET_ID: ${{ steps.scan-ubuntu.outputs.asset_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          API="https://api.us4.sysdig.com/secure/vulnerability/v1beta1/sboms"
+          OUT="sbom-ubuntu.cdx.json"
+
+          curl -fsSL \
+            -H "Authorization: Bearer ${SYSDIG_API_TOKEN}" \
+            "${API}?assetId=${ASSET_ID}&assetType=container-image" \
+            -o "${OUT}"
+
+          head -c 1 "${OUT}" | grep -q '{'
+          echo "sbom_file=${OUT}" >> "$GITHUB_OUTPUT"
+          echo "Downloaded ubuntu SBOM: ${OUT}"
+
+      - name: Cosign attest SBOMs to both images (keyless)
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+          APP_DIGEST_REF: ${{ steps.push-app.outputs.digest_ref }}
+          UBUNTU_DIGEST_REF: ${{ steps.push-ubuntu.outputs.digest_ref }}
+          APP_SBOM: ${{ steps.sbom-app.outputs.sbom_file }}
+          UBUNTU_SBOM: ${{ steps.sbom-ubuntu.outputs.sbom_file }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cosign attest --yes \
+            --predicate "${APP_SBOM}" \
+            --type cyclonedx \
+            "${APP_DIGEST_REF}"
+
+          cosign attest --yes \
+            --predicate "${UBUNTU_SBOM}" \
+            --type cyclonedx \
+            "${UBUNTU_DIGEST_REF}"
+
+      ###########################################
+      # Optional verification (demo)
+      ###########################################
+
+      - name: Verify signatures and SBOM attestations (demo)
+        env:
+          COSIGN_EXPERIMENTAL: "true"
+          APP_DIGEST_REF: ${{ steps.push-app.outputs.digest_ref }}
+          UBUNTU_DIGEST_REF: ${{ steps.push-ubuntu.outputs.digest_ref }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cosign verify \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            --certificate-identity-regexp "https://github.com/${{ github.repository }}/.+" \
+            "${APP_DIGEST_REF}"
+
+          cosign verify \
+            --certificate-oidc-issuer https://token.actions.githubusercontent.com \
+            --certificate-identity-regexp "https://github.com/${{ github.repository }}/.+" \
+            "${UBUNTU_DIGEST_REF}"
+
+          cosign verify-attestation --type cyclonedx "${APP_DIGEST_REF}"
+          cosign verify-attestation --type cyclonedx "${UBUNTU_DIGEST_REF}"
