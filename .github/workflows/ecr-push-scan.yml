@@ -83,11 +83,11 @@ jobs:
           # do NOT exit; continue workflow
 
           # Extract Sysdig sbomId (default: first sha256:<64>)
-          SBOM_ID="$(grep -Eo 'sbomId":"[^"]+"' sysdig-app-scan.log | head -n1 | cut -d'"' -f3 || true)"
+          SBOM_ID="$(grep -Eo 'sbomId":"[^"]+"' sysdig-scan.log | head -n1 | cut -d'"' -f3 || true)"
 
           if [[ -z "${SBOM_ID}" ]]; then
             echo "ERROR: Failed to extract sbomId for app image from Sysdig output."
-            tail -n 200 sysdig-app-scan.log
+            tail -n 200 sysdig-scan.log
             exit 1
           fi
 
@@ -150,7 +150,7 @@ jobs:
           # disable "exit-on-error" + pipefail JUST for the scan pipeline
           set +e
           set +o pipefail
-          ./scripts/deploy_scan_ubuntu.sh 2>&1 | tee sysdig-scan.log
+          ./scripts/deploy_scan_ubuntu.sh 2>&1 | tee sysdig-app-scan.log
           SCAN_EXIT=${PIPESTATUS[0]}   # exit code of deploy_scan.sh (first command in the pipeline)
           set -o pipefail
           set -e
