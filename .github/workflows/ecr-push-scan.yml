@@ -121,7 +121,7 @@ jobs:
 
           docker pull "${UBUNTU_BASE}"
 
-          UBUNTU_IMAGE="${ECR_REGISTRY}/${{ vars.ECR_UBUNTU_REPOSITORY }}:${UBUNTU_TAG}"
+          UBUNTU_IMAGE="${ECR_REGISTRY}/ubuntu:${UBUNTU_TAG}"
           docker tag "${UBUNTU_BASE}" "${UBUNTU_IMAGE}"
 
           echo "ubuntu_image=${UBUNTU_IMAGE}" >> "$GITHUB_OUTPUT"
