@@ -84,17 +84,17 @@ jobs:
           # do NOT exit; continue workflow
 
           # Extract Sysdig sbomId
-          SBOM_ID="$(grep -Eo '"sbomId":"[^"]+"' sysdig-scan.log | head -n1 | cut -d'"' -f4 || true)"
+          ASSET_ID="$(grep -Eo 'assetID=sha256:[0-9a-f]{64}' sysdig-scan.log | head -n1 | cut -d= -f2 || true)"
 
 
-          if [[ -z "${SBOM_ID}" ]]; then
-            echo "ERROR: Failed to extract sbomId for app image from Sysdig output."
+          if [[ -z "${ASSET_ID}" ]]; then
+            echo "ERROR: Failed to extract assetId for app image from Sysdig output."
             tail -n 200 sysdig-scan.log
             exit 1
           fi
 
-          echo "sbom_id=${SBOM_ID}" >> "$GITHUB_OUTPUT"
-          echo "App sbom_id: ${SBOM_ID}"
+          echo "asset_id=${ASSET_ID}" >> "$GITHUB_OUTPUT"
+          echo "App asset_id: ${ASSET_ID}"
 
       - name: Push app image to ECR (capture digest ref)
         id: push-app
@@ -160,17 +160,18 @@ jobs:
 
           echo "Sysdig scan exit code: ${SCAN_EXIT}"
           # do NOT exit; continue workflow
-          
-          SBOM_ID="$(grep -Eo '"sbomId":"[^"]+"' sysdig-app-scan.log | head -n1 | cut -d'"' -f4 || true)"
 
-          if [[ -z "${SBOM_ID}" ]]; then
-            echo "ERROR: Failed to extract sbomId for ubuntu image from Sysdig output."
+          SBOM_ID="$(grep -Eo '"sbomId":"[^"]+"' sysdig-app-scan.log | head -n1 | cut -d'"' -f4 || true)"
+          ASSET_ID="$(grep -Eo 'assetID=sha256:[0-9a-f]{64}' sysdig-app-scan.log | head -n1 | cut -d= -f2 || true)"
+
+          if [[ -z "${ASSET_ID}" ]]; then
+            echo "ERROR: Failed to extract assetId for ubuntu image from Sysdig output."
             tail -n 200 sysdig-app-scan.log
             exit 1
           fi
 
-          echo "sbom_id=${SBOM_ID}" >> "$GITHUB_OUTPUT"
-          echo "Ubuntu sbom_id: ${SBOM_ID}"
+          echo "asset_id=${ASSET_ID}" >> "$GITHUB_OUTPUT"
+          echo "Ubuntu asset_id: ${ASSET_ID}"
 
       - name: Push ubuntu image to ECR (capture digest ref)
         id: push-ubuntu
@@ -218,7 +219,7 @@ jobs:
         id: sbom-app
         env:
           SYSDIG_API_TOKEN: ${{ secrets.SYSDIG_API }}
-          SBOM_ID: ${{ steps.scan-app.outputs.sbom_id }}
+          ASSET_ID: ${{ steps.scan-app.outputs.asset_id }}
         shell: bash
         run: |
           set -euo pipefail
@@ -227,7 +228,7 @@ jobs:
 
           curl -fsSL \
             -H "Authorization: Bearer ${SYSDIG_API_TOKEN}" \
-            "${API}?bomIdentifier=${SBOM_ID}" \
+            "${API}?assetId=${ASSET_ID}&assetType=container-image" \
             -o "${OUT}"
 
           head -c 1 "${OUT}" | grep -q '{'
@@ -238,7 +239,7 @@ jobs:
         id: sbom-ubuntu
         env:
           SYSDIG_API_TOKEN: ${{ secrets.SYSDIG_API }}
-          SBOM_ID: ${{ steps.scan-ubuntu.outputs.sbom_id }}
+          ASSET_ID: ${{ steps.scan-ubuntu.outputs.asset_id }}
         shell: bash
         run: |
           set -euo pipefail
@@ -247,7 +248,7 @@ jobs:
 
           curl -fsSL \
             -H "Authorization: Bearer ${SYSDIG_API_TOKEN}" \
-            "${API}?bomIdentifier=${SBOM_ID}" \
+            "${API}?assetId=${ASSET_ID}&assetType=container-image" \
             -o "${OUT}"
 
           head -c 1 "${OUT}" | grep -q '{'
