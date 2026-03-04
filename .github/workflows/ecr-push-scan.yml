@@ -209,19 +209,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-
-          if [[ -z "${COSIGN_PRIVATE_KEY}" ]]; then
-            echo "ERROR: COSIGN_PRIVATE_KEY secret is empty."
-            exit 1
-          fi
-
-          # If it looks like PEM, write as-is. Otherwise treat as base64 and decode.
-          if echo "${COSIGN_PRIVATE_KEY}" | head -n 1 | grep -q "BEGIN"; then
-            printf "%s\n" "${COSIGN_PRIVATE_KEY}" > cosign.pem
-          else
-            echo "${COSIGN_PRIVATE_KEY}" | tr -d '\n' | base64 -d > cosign.pem
-          fi
-
+          printf "%s\n" "${COSIGN_PRIVATE_KEY}" > cosign.pem
           chmod 600 cosign.pem
           echo "key_path=cosign.pem" >> "$GITHUB_OUTPUT"
 
