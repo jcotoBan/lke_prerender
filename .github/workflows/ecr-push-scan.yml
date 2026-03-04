@@ -83,8 +83,9 @@ jobs:
           echo "Sysdig scan exit code: ${SCAN_EXIT}"
           # do NOT exit; continue workflow
 
-          # Extract Sysdig sbomId (default: first sha256:<64>)
-          SBOM_ID="$(grep -Eo 'sbomId":"[^"]+"' sysdig-scan.log | head -n1 | cut -d'"' -f3 || true)"
+          # Extract Sysdig sbomId
+          SBOM_ID="$(grep -Eo '"sbomId":"[^"]+"' sysdig-scan.log | head -n1 | cut -d'"' -f4 || true)"
+
 
           if [[ -z "${SBOM_ID}" ]]; then
             echo "ERROR: Failed to extract sbomId for app image from Sysdig output."
@@ -159,8 +160,8 @@ jobs:
 
           echo "Sysdig scan exit code: ${SCAN_EXIT}"
           # do NOT exit; continue workflow
-
-          SBOM_ID="$(grep -Eo 'sbomId":"[^"]+"' sysdig-app-scan.log | head -n1 | cut -d'"' -f3 || true)"
+          
+          SBOM_ID="$(grep -Eo '"sbomId":"[^"]+"' sysdig-app-scan.log | head -n1 | cut -d'"' -f4 || true)"
 
           if [[ -z "${SBOM_ID}" ]]; then
             echo "ERROR: Failed to extract sbomId for ubuntu image from Sysdig output."
@@ -226,7 +227,7 @@ jobs:
 
           curl -fsSL \
             -H "Authorization: Bearer ${SYSDIG_API_TOKEN}" \
-            "${API}?bomIdentifier=${SBOM_ID} \
+            "${API}?bomIdentifier=${SBOM_ID}" \
             -o "${OUT}"
 
           head -c 1 "${OUT}" | grep -q '{'
@@ -246,7 +247,7 @@ jobs:
 
           curl -fsSL \
             -H "Authorization: Bearer ${SYSDIG_API_TOKEN}" \
-            "${API}?bomIdentifier=${SBOM_ID} \
+            "${API}?bomIdentifier=${SBOM_ID}" \
             -o "${OUT}"
 
           head -c 1 "${OUT}" | grep -q '{'
