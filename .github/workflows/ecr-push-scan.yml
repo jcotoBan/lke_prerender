@@ -191,8 +191,10 @@ jobs:
           echo "digest_ref=${DIGEST_REF}" >> "$GITHUB_OUTPUT"
           echo "Ubuntu digest ref: ${DIGEST_REF}"
 
+
+
       ###########################################
-      # Cosign: install, sign both images
+      # Cosign: install, load PEM key, sign both
       ###########################################
 
       - name: Install cosign
@@ -200,78 +202,61 @@ jobs:
         with:
           cosign-release: "v2.2.4"
 
-      - name: Cosign sign both images (keyless, by digest)
+      - name: Write cosign PEM key from secret
+        id: cosign-key
         env:
-          COSIGN_EXPERIMENTAL: "true"
-          APP_DIGEST_REF: ${{ steps.push-app.outputs.digest_ref }}
-          UBUNTU_DIGEST_REF: ${{ steps.push-ubuntu.outputs.digest_ref }}
+          COSIGN_PRIVATE_KEY: ${{ secrets.COSIGN_PRIVATE_KEY }}
         shell: bash
         run: |
           set -euo pipefail
-          cosign sign --yes "${APP_DIGEST_REF}"
-          cosign sign --yes "${UBUNTU_DIGEST_REF}"
+
+          if [[ -z "${COSIGN_PRIVATE_KEY}" ]]; then
+            echo "ERROR: COSIGN_PRIVATE_KEY secret is empty."
+            exit 1
+          fi
+
+          echo "${COSIGN_PRIVATE_KEY}" | base64 -d > cosign.pem
+          chmod 600 cosign.pem
+
+          echo "key_path=cosign.pem" >> "$GITHUB_OUTPUT"
+
+      - name: Cosign sign both images (PEM key, by digest)
+        env:
+          APP_DIGEST_REF: ${{ steps.push-app.outputs.digest_ref }}
+          UBUNTU_DIGEST_REF: ${{ steps.push-ubuntu.outputs.digest_ref }}
+          COSIGN_KEY: ${{ steps.cosign-key.outputs.key_path }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          cosign sign --yes --key "${COSIGN_KEY}" "${APP_DIGEST_REF}"
+          cosign sign --yes --key "${COSIGN_KEY}" "${UBUNTU_DIGEST_REF}"
 
       ###########################################
       # SBOM: fetch from Sysdig + attest to each digest
       ###########################################
 
-      - name: Download SBOM from Sysdig (app)
-        id: sbom-app
+      - name: Cosign attest SBOMs to both images
         env:
-          SYSDIG_API_TOKEN: ${{ secrets.SYSDIG_API }}
-          ASSET_ID: ${{ steps.scan-app.outputs.asset_id }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          API="https://api.us4.sysdig.com/secure/vulnerability/v1beta1/sboms"
-          OUT="sbom-app.cdx.json"
-
-          curl -fsSL \
-            -H "Authorization: Bearer ${SYSDIG_API_TOKEN}" \
-            "${API}?assetId=${ASSET_ID}&assetType=container-image" \
-            -o "${OUT}"
-
-          head -c 1 "${OUT}" | grep -q '{'
-          echo "sbom_file=${OUT}" >> "$GITHUB_OUTPUT"
-          echo "Downloaded app SBOM: ${OUT}"
-
-      - name: Download SBOM from Sysdig (ubuntu)
-        id: sbom-ubuntu
-        env:
-          SYSDIG_API_TOKEN: ${{ secrets.SYSDIG_API }}
-          ASSET_ID: ${{ steps.scan-ubuntu.outputs.asset_id }}
-        shell: bash
-        run: |
-          set -euo pipefail
-          API="https://api.us4.sysdig.com/secure/vulnerability/v1beta1/sboms"
-          OUT="sbom-ubuntu.cdx.json"
-
-          curl -fsSL \
-            -H "Authorization: Bearer ${SYSDIG_API_TOKEN}" \
-            "${API}?assetId=${ASSET_ID}&assetType=container-image" \
-            -o "${OUT}"
-
-          head -c 1 "${OUT}" | grep -q '{'
-          echo "sbom_file=${OUT}" >> "$GITHUB_OUTPUT"
-          echo "Downloaded ubuntu SBOM: ${OUT}"
-
-      - name: Cosign attest SBOMs to both images (keyless)
-        env:
-          COSIGN_EXPERIMENTAL: "true"
           APP_DIGEST_REF: ${{ steps.push-app.outputs.digest_ref }}
           UBUNTU_DIGEST_REF: ${{ steps.push-ubuntu.outputs.digest_ref }}
           APP_SBOM: ${{ steps.sbom-app.outputs.sbom_file }}
           UBUNTU_SBOM: ${{ steps.sbom-ubuntu.outputs.sbom_file }}
+          COSIGN_KEY: ${{ steps.cosign-key.outputs.key_path }}
         shell: bash
         run: |
           set -euo pipefail
 
-          cosign attest --yes \
+          cosign attest \
+            --yes \
+            --key "${COSIGN_KEY}" \
             --predicate "${APP_SBOM}" \
             --type cyclonedx \
             "${APP_DIGEST_REF}"
 
-          cosign attest --yes \
+          cosign attest \
+            --yes \
+            --key "${COSIGN_KEY}" \
             --predicate "${UBUNTU_SBOM}" \
             --type cyclonedx \
             "${UBUNTU_DIGEST_REF}"
