@@ -215,9 +215,14 @@ jobs:
             exit 1
           fi
 
-          echo "${COSIGN_PRIVATE_KEY}" | base64 -d > cosign.pem
-          chmod 600 cosign.pem
+          # If it looks like PEM, write as-is. Otherwise treat as base64 and decode.
+          if echo "${COSIGN_PRIVATE_KEY}" | head -n 1 | grep -q "BEGIN"; then
+            printf "%s\n" "${COSIGN_PRIVATE_KEY}" > cosign.pem
+          else
+            echo "${COSIGN_PRIVATE_KEY}" | tr -d '\n' | base64 -d > cosign.pem
+          fi
 
+          chmod 600 cosign.pem
           echo "key_path=cosign.pem" >> "$GITHUB_OUTPUT"
 
       - name: Cosign sign both images (PEM key, by digest)
