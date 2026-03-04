@@ -229,6 +229,41 @@ jobs:
       # SBOM: fetch from Sysdig + attest to each digest
       ###########################################
 
+      - name: Download SBOM from Sysdig (app)
+        id: sbom-app
+        env:
+          SYSDIG_API_TOKEN: ${{ secrets.SYSDIG_API }}
+          ASSET_ID: ${{ steps.scan-app.outputs.asset_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          API="https://api.us4.sysdig.com/secure/vulnerability/v1beta1/sboms"
+          OUT="sbom-app.cdx.json"
+          curl -fsSL \
+            -H "Authorization: Bearer ${SYSDIG_API_TOKEN}" \
+            "${API}?assetId=${ASSET_ID}&assetType=container-image" \
+            -o "${OUT}"
+          head -c 1 "${OUT}" | grep -q '{'
+          echo "sbom_file=${OUT}" >> "$GITHUB_OUTPUT"
+          echo "Downloaded app SBOM: ${OUT}"
+      - name: Download SBOM from Sysdig (ubuntu)
+        id: sbom-ubuntu
+        env:
+          SYSDIG_API_TOKEN: ${{ secrets.SYSDIG_API }}
+          ASSET_ID: ${{ steps.scan-ubuntu.outputs.asset_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          API="https://api.us4.sysdig.com/secure/vulnerability/v1beta1/sboms"
+          OUT="sbom-ubuntu.cdx.json"
+          curl -fsSL \
+            -H "Authorization: Bearer ${SYSDIG_API_TOKEN}" \
+            "${API}?assetId=${ASSET_ID}&assetType=container-image" \
+            -o "${OUT}"
+          head -c 1 "${OUT}" | grep -q '{'
+          echo "sbom_file=${OUT}" >> "$GITHUB_OUTPUT"
+          echo "Downloaded ubuntu SBOM: ${OUT}"
+
       - name: Cosign attest SBOMs to both images
         env:
           APP_DIGEST_REF: ${{ steps.push-app.outputs.digest_ref }}
