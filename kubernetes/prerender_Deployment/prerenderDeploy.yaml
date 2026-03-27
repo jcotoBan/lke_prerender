@@ -44,10 +44,11 @@ spec:
           limits:
             cpu: 500m
             memory: 500Mi
+        securityContext:
+          runAsNonRoot: true
 status: {}
 
 ---
-
 apiVersion: v1
 kind: Service
 metadata:
@@ -70,4 +71,3 @@ spec:
     app: prerender
 status:
   loadBalancer: {}
-
